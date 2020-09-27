@@ -25,8 +25,8 @@ namespace DTerrain
         [Tooltip("GameObject representing chunk that will be spawned.")]
         private GameObject baseChunk=null;
 
-        private int chunkSizeX;
-        private int chunkSizeY;
+        public int ChunkSizeX { get; private set; }
+        public int ChunkSizeY { get; private set; }
         
         List<DestructibleTerrainChunk> chunks;
     
@@ -48,24 +48,24 @@ namespace DTerrain
         {
             chunks = new List<DestructibleTerrainChunk>();
             Texture2D[] pieces = new Texture2D[chunksX*chunksY];
-            chunkSizeX = originalTexture.width/chunksX;
-            chunkSizeY = originalTexture.height/chunksY;
-
+            ChunkSizeX = originalTexture.width/chunksX;
+            ChunkSizeY = originalTexture.height/chunksY;
             for(int i = 0; i<chunksX;i++)
             {
                 for(int j = 0; j<chunksY;j++)
                 {
-                    Texture2D piece = new Texture2D(chunkSizeX, chunkSizeY);
+                    Texture2D piece = new Texture2D(ChunkSizeX, ChunkSizeY);
                     piece.filterMode = FilterMode.Point;
-                    piece.SetPixels(0,0,chunkSizeX,chunkSizeY, originalTexture.GetPixels(i*chunkSizeX,j*chunkSizeY,chunkSizeX,chunkSizeY));
+                    piece.SetPixels(0,0,ChunkSizeX,ChunkSizeY, originalTexture.GetPixels(i*ChunkSizeX,j*ChunkSizeY,ChunkSizeX,ChunkSizeY));
                     piece.Apply();
                     pieces[i*chunksY + j] = piece;
 
                     GameObject c = Instantiate(baseChunk);
-                    c.transform.position = gameObject.transform.position+new Vector3((i + .5f)*chunkSizeX/PPU,(j + .5f)*chunkSizeY/PPU,0);
-                    c.GetComponent<SpriteRenderer>().sprite = Sprite.Create(piece,new Rect(0,0,chunkSizeX,chunkSizeY),new Vector2(0.5f,0.5f),PPU);
+                    c.name = "Chunk " + i + "/" + j;
+                    Vector3 relativePos = new Vector3((i + .5f) * ChunkSizeX / PPU, (j + .5f) * ChunkSizeY / PPU, 0);
+                    c.transform.position = gameObject.transform.position + relativePos;
+                    c.GetComponent<SpriteRenderer>().sprite = Sprite.Create(piece,new Rect(0,0,ChunkSizeX,ChunkSizeY),new Vector2(0.5f,0.5f),PPU);
                     c.transform.SetParent(transform);
-
                     DestructibleTerrainChunk chunkComp = c.GetComponent<DestructibleTerrainChunk>();
                 
                     if(chunkComp!=null)
@@ -130,17 +130,17 @@ namespace DTerrain
             if (height == -1)
                 height = r.Length();
 
-            int xchunk = (x + chunkSizeX / 2) / chunkSizeX;
-            int ychunk = (y + chunkSizeY / 2) / chunkSizeY;
-            int posInChunkX = x - xchunk * chunkSizeX + chunkSizeX / 2;
-            int posInChunkY = y - ychunk * chunkSizeY + chunkSizeY / 2;
+            int xchunk = (x + ChunkSizeX / 2) / ChunkSizeX;
+            int ychunk = (y + ChunkSizeY / 2) / ChunkSizeY;
+            int posInChunkX = x - xchunk * ChunkSizeX + ChunkSizeX / 2;
+            int posInChunkY = y - ychunk * ChunkSizeY + ChunkSizeY / 2;
             int cid = xchunk * chunksY + ychunk;
 
             int k = 0;
             //Iterate over possible chunks vertically that can be contained in destruction for this range
-            while (cid >= 0 && cid < chunks.Count && k + ychunk < chunksY && (k - 1) * chunkSizeY <= height)
+            while (cid >= 0 && cid < chunks.Count && k + ychunk < chunksY && (k - 1) * ChunkSizeY <= height)
             {
-                if(chunks[cid].DestroyTerrain(posInChunkX, posInChunkY - k * chunkSizeY, r))
+                if(chunks[cid].DestroyTerrain(posInChunkX, posInChunkY - k * ChunkSizeY, r))
                     chunks[cid].updateTerrainOnNextFrame = true;
 
                 cid++;
@@ -159,10 +159,10 @@ namespace DTerrain
         /// <returns>True if any changes were made</returns>
         public bool DestroyTerrain(int x, int y)
         {
-            int xchunk = (x+chunkSizeX/2)/chunkSizeX;
-            int ychunk = (y+chunkSizeY/2)/chunkSizeY;
-            int posInChunkX = x-xchunk*chunkSizeX + chunkSizeX/2;
-            int posInChunkY = y-ychunk*chunkSizeY + chunkSizeY/2;
+            int xchunk = (x+ChunkSizeX/2)/ChunkSizeX;
+            int ychunk = (y+ChunkSizeY/2)/ChunkSizeY;
+            int posInChunkX = x-xchunk*ChunkSizeX + ChunkSizeX/2;
+            int posInChunkY = y-ychunk*ChunkSizeY + ChunkSizeY/2;
             int cid = xchunk*chunksY + ychunk;
             if(cid>=0 && cid<chunks.Count)
             {
@@ -179,10 +179,10 @@ namespace DTerrain
 
         public void MakeOutline(int x, int y, Color outlineCol)
         {
-            int xchunk = (x+chunkSizeX/2)/chunkSizeX;
-            int ychunk = (y+chunkSizeY/2)/chunkSizeY;
-            int posInChunkX = x-xchunk*chunkSizeX + chunkSizeX/2;
-            int posInChunkY = y-ychunk*chunkSizeY + chunkSizeY/2;
+            int xchunk = (x+ChunkSizeX/2)/ChunkSizeX;
+            int ychunk = (y+ChunkSizeY/2)/ChunkSizeY;
+            int posInChunkX = x-xchunk*ChunkSizeX + ChunkSizeX/2;
+            int posInChunkY = y-ychunk*ChunkSizeY + ChunkSizeY/2;
             int cid = xchunk*chunksY + ychunk;
             if(cid>=0 && cid<chunks.Count)
             {
@@ -199,10 +199,10 @@ namespace DTerrain
         /// <returns>True - filled, False - not filled</returns>
         public bool FilledAt(int x, int y)
         {
-            int xchunk = (x+chunkSizeX/2)/chunkSizeX;
-            int ychunk = (y+chunkSizeY/2)/chunkSizeY;
-            int posInChunkX = x-xchunk*chunkSizeX + chunkSizeX/2;
-            int posInChunkY = y-ychunk*chunkSizeY + chunkSizeY/2;
+            int xchunk = (x+ChunkSizeX/2)/ChunkSizeX;
+            int ychunk = (y+ChunkSizeY/2)/ChunkSizeY;
+            int posInChunkX = x-xchunk*ChunkSizeX + ChunkSizeX/2;
+            int posInChunkY = y-ychunk*ChunkSizeY + ChunkSizeY/2;
             int cid = xchunk*chunksY + ychunk;
             if(cid>=0 && cid<chunks.Count)
             {
